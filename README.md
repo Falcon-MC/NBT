@@ -26,6 +26,7 @@ no dependency on the protocol or the server.
     varint length, every array and list length is a zigzag varint
 - **`BinaryStream` / `ReadOnlyBinaryStream`** - the byte buffer the codecs read from and write to, with
   `EncodingSettings` limits (maximum list size, byte array size and string length) for untrusted input
+- **`json::Value`** - the JSON parser shared by the libraries that depend on this one
 
 Nesting is limited to `NbtIo::MAX_DEPTH` (16) levels below the root on both read and write.
 
