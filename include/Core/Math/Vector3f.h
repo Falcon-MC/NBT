@@ -8,7 +8,7 @@ struct Vector3f {
     Vector3f() : x(0.0f), y(0.0f), z(0.0f) {
     }
 
-    Vector3f(float x, float y, float z) : x(x), y(y), z(z) {
+    Vector3f(float xValue, float yValue, float zValue) : x(xValue), y(yValue), z(zValue) {
     }
 
     bool operator==(const Vector3f &right) const {

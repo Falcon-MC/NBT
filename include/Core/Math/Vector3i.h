@@ -10,7 +10,7 @@ struct Vector3i {
     Vector3i() : x(0), y(0), z(0) {
     }
 
-    Vector3i(int32_t x, int32_t y, int32_t z) : x(x), y(y), z(z) {
+    Vector3i(int32_t xValue, int32_t yValue, int32_t zValue) : x(xValue), y(yValue), z(zValue) {
     }
 
     bool operator==(const Vector3i &right) const {
