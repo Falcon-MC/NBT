@@ -319,6 +319,7 @@ namespace {
         check(throwsOnRead(bytes({0x0A, 0x00, 0x00, 0x01}), NbtVariant::BigEndian), "truncated compound is rejected");
         check(throwsOnRead(bytes({0x09, 0x00, 0x0E, 0x00}), NbtVariant::Network), "unknown list type is rejected");
         check(throwsOnRead(bytes({0x07, 0x00, 0x01}), NbtVariant::Network), "negative array length is rejected");
+        check(throwsOnRead(bytes({0x09, 0x00, 0x00, 0x01}), NbtVariant::Network), "non-empty list of END is rejected");
 
         ReadOnlyBinaryStream stream(bytes({0x08, 0x00, 0xFF, 0xFF, 0x03}));
         EncodingSettings settings;

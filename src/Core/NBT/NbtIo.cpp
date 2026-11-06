@@ -229,6 +229,11 @@ Tag NbtIo::readValue(ReadOnlyBinaryStream &stream, Tag::Type type, NbtVariant va
             const Tag::Type elementType = (Tag::Type) elementTypeId;
             const size_t length = readArrayLength(stream, variant, settings.mMaxListSize);
 
+            // an END element type carries no bytes, so a non-empty list of it would allocate many empty tags
+            // while consuming nothing from the stream
+            if (elementType == Tag::Type::End && length > 0)
+                throw BinaryDataException("NBT list of END must be empty");
+
             std::vector<Tag> values;
             values.reserve(length);
 
