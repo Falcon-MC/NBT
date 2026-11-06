@@ -1,5 +1,6 @@
 #include "Core/NBT/NbtIo.h"
 #include "Core/NBT/Tag.h"
+#include "Core/Json/Json.h"
 #include "Core/Utility/BinaryStream.h"
 
 #include <cmath>
@@ -333,6 +334,24 @@ namespace {
         check(threw, "string longer than the encoding limit is rejected");
     }
 
+    void testJsonDepthLimit() {
+        // a deeply nested document must be rejected instead of overflowing the stack while parsing
+        const std::string deep(json::Parser::MAX_DEPTH + 50, '[');
+        check(json::parse(deep) == nullptr, "over-deep JSON array nesting is rejected");
+
+        const std::string shallowOpen(8, '[');
+        const std::string shallow = shallowOpen + std::string(8, ']');
+        check(json::parse(shallow) != nullptr, "moderate JSON nesting still parses");
+
+        std::string nestedObjects;
+        for (size_t i = 0; i < json::Parser::MAX_DEPTH + 50; i++)
+            nestedObjects += "{\"a\":";
+        nestedObjects += "1";
+        for (size_t i = 0; i < json::Parser::MAX_DEPTH + 50; i++)
+            nestedObjects += "}";
+        check(json::parse(nestedObjects) == nullptr, "over-deep JSON object nesting is rejected");
+    }
+
     void testTagApi() {
         Tag compound = Tag::ofCompound();
         compound.putInt("b", 1);
@@ -382,6 +401,7 @@ int main() {
     testNaNRoundTrip();
     testMaxDepth();
     testMalformedInput();
+    testJsonDepthLimit();
     testTagApi();
 
     std::printf("%d checks, %d failures\n", gChecks, gFailures);

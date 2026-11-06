@@ -137,6 +137,10 @@ namespace json {
 
     class Parser {
     public:
+        // parsing and destroying a nested value both recurse once per level, so the depth must stay well
+        // below what the smallest thread stack can hold
+        static constexpr size_t MAX_DEPTH = 128;
+
         explicit Parser(const std::string &source) : mSource(source) {
         }
 
@@ -160,9 +164,14 @@ namespace json {
 
             switch (mSource[mPosition]) {
                 case '{':
-                    return parseObject();
-                case '[':
-                    return parseArray();
+                case '[': {
+                    if (mDepth >= MAX_DEPTH)
+                        return nullptr;
+                    ++mDepth;
+                    std::unique_ptr<Value> result = mSource[mPosition] == '{' ? parseObject() : parseArray();
+                    --mDepth;
+                    return result;
+                }
                 case '"': {
                     std::string value;
                     if (!parseString(value))
@@ -394,6 +403,7 @@ namespace json {
 
         const std::string &mSource;
         size_t mPosition = 0;
+        size_t mDepth = 0;
     };
 
     inline std::unique_ptr<Value> parse(const std::string &source) {
