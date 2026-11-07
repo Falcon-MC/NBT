@@ -1,5 +1,6 @@
 #include "Core/NBT/NbtIo.h"
 #include "Core/NBT/Tag.h"
+#include "Core/Json/Json.h"
 #include "Core/Utility/BinaryStream.h"
 
 #include <cmath>
@@ -318,6 +319,7 @@ namespace {
         check(throwsOnRead(bytes({0x0A, 0x00, 0x00, 0x01}), NbtVariant::BigEndian), "truncated compound is rejected");
         check(throwsOnRead(bytes({0x09, 0x00, 0x0E, 0x00}), NbtVariant::Network), "unknown list type is rejected");
         check(throwsOnRead(bytes({0x07, 0x00, 0x01}), NbtVariant::Network), "negative array length is rejected");
+        check(throwsOnRead(bytes({0x09, 0x00, 0x00, 0x01}), NbtVariant::Network), "non-empty list of END is rejected");
 
         ReadOnlyBinaryStream stream(bytes({0x08, 0x00, 0xFF, 0xFF, 0x03}));
         EncodingSettings settings;
@@ -331,6 +333,24 @@ namespace {
             threw = true;
         }
         check(threw, "string longer than the encoding limit is rejected");
+    }
+
+    void testJsonDepthLimit() {
+        // a deeply nested document must be rejected instead of overflowing the stack while parsing
+        const std::string deep(json::Parser::MAX_DEPTH + 50, '[');
+        check(json::parse(deep) == nullptr, "over-deep JSON array nesting is rejected");
+
+        const std::string shallowOpen(8, '[');
+        const std::string shallow = shallowOpen + std::string(8, ']');
+        check(json::parse(shallow) != nullptr, "moderate JSON nesting still parses");
+
+        std::string nestedObjects;
+        for (size_t i = 0; i < json::Parser::MAX_DEPTH + 50; i++)
+            nestedObjects += "{\"a\":";
+        nestedObjects += "1";
+        for (size_t i = 0; i < json::Parser::MAX_DEPTH + 50; i++)
+            nestedObjects += "}";
+        check(json::parse(nestedObjects) == nullptr, "over-deep JSON object nesting is rejected");
     }
 
     void testTagApi() {
@@ -382,6 +402,7 @@ int main() {
     testNaNRoundTrip();
     testMaxDepth();
     testMalformedInput();
+    testJsonDepthLimit();
     testTagApi();
 
     std::printf("%d checks, %d failures\n", gChecks, gFailures);
